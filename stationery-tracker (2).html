@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>StatioTrack Pro — Stationery Sales & Profit Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg:#0d0f14; --surface:#141720; --surface2:#1c2030; --surface3:#242840;
+  --border:rgba(255,255,255,0.07); --border-hi:rgba(99,179,237,0.45);
+  --text:#e8eaf0; --muted:#6b7280; --dim:#9ca3af;
+  --blue:#63b3ed; --blue-d:#2b6cb0;
+  --green:#48bb78; --green-d:#276749;
+  --red:#fc8181; --gold:#f6ad55; --purple:#b794f4; --teal:#4fd1c5;
+  --r:12px; --rsm:8px;
+  --shadow:0 8px 32px rgba(0,0,0,0.45);
+  --tr:0.2s cubic-bezier(0.4,0,0.2,1);
+  --font:'Sora',sans-serif; --mono:'JetBrains Mono',monospace;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:15px;line-height:1.6;min-height:100vh}
+body::before{content:'';position:fixed;top:-200px;left:50%;transform:translateX(-50%);width:900px;height:600px;background:radial-gradient(ellipse,rgba(99,179,237,0.055) 0%,transparent 70%);pointer-events:none;z-index:0}
+
+/* ── SHELL ── */
+.shell{max-width:1180px;margin:0 auto;padding:0 20px 80px;position:relative;z-index:1}
+
+/* ── NAV ── */
+nav{display:flex;align-items:center;justify-content:space-between;padding:22px 0 28px;border-bottom:1px solid var(--border);margin-bottom:32px;flex-wrap:wrap;gap:12px}
+.nav-brand{display:flex;align-items:center;gap:12px}
+.nav-logo{width:42px;height:42px;background:linear-gradient(135deg,var(--blue),var(--purple));border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;box-shadow:0 4px 16px rgba(99,179,237,0.28)}
+.nav-name{font-size:1.25rem;font-weight:700;letter-spacing:-0.02em;background:linear-gradient(90deg,var(--text) 55%,var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.nav-badge{font-family:var(--mono);font-size:0.6rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--blue);background:rgba(99,179,237,0.1);border:1px solid rgba(99,179,237,0.22);padding:2px 9px;border-radius:20px}
+.nav-right{display:flex;align-items:center;gap:16px}
+.nav-clock{font-family:var(--mono);font-size:0.8rem;color:var(--teal);background:rgba(79,209,197,0.08);border:1px solid rgba(79,209,197,0.15);padding:5px 14px;border-radius:20px}
+.nav-date{font-family:var(--mono);font-size:0.72rem;color:var(--muted)}
+
+/* ── TABS ── */
+.tabs{display:flex;gap:4px;margin-bottom:28px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:5px}
+.tab{flex:1;padding:10px 16px;border:none;background:transparent;color:var(--muted);font-family:var(--font);font-size:0.85rem;font-weight:500;border-radius:var(--rsm);cursor:pointer;transition:all var(--tr);display:flex;align-items:center;justify-content:center;gap:7px}
+.tab:hover{color:var(--text);background:var(--surface2)}
+.tab.active{background:var(--surface3);color:var(--text);box-shadow:0 2px 8px rgba(0,0,0,0.3)}
+.tab-icon{font-size:1rem}
+
+/* ── METRICS ── */
+.metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:28px}
+.mc{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px;position:relative;overflow:hidden;transition:transform var(--tr),border-color var(--tr)}
+.mc::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.mc.blue::before{background:linear-gradient(90deg,var(--blue),var(--purple))}
+.mc.gold::before{background:linear-gradient(90deg,var(--gold),var(--red))}
+.mc.green::before{background:linear-gradient(90deg,var(--green),var(--teal))}
+.mc.purple::before{background:linear-gradient(90deg,var(--purple),var(--blue))}
+.mc.teal::before{background:linear-gradient(90deg,var(--teal),var(--green))}
+.mc:hover{transform:translateY(-2px);border-color:rgba(255,255,255,0.11)}
+.mc-icon{font-size:1.3rem;margin-bottom:8px;display:block}
+.mc-label{font-family:var(--mono);font-size:0.62rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+.mc-val{font-family:var(--mono);font-size:1.5rem;font-weight:600;letter-spacing:-.02em;color:var(--text);line-height:1}
+.mc-val.g{color:var(--green)} .mc-val.r{color:var(--red)} .mc-val.gold{color:var(--gold)}
+.mc-sub{font-size:0.7rem;color:var(--muted);margin-top:4px}
+
+/* ── PANEL ── */
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:20px}
+.ph{display:flex;align-items:center;justify-content:space-between;padding:16px 22px;border-bottom:1px solid var(--border);cursor:pointer;user-select:none;transition:background var(--tr)}
+.ph:hover{background:var(--surface2)}
+.ph-left{display:flex;align-items:center;gap:11px}
+.ph-icon{width:30px;height:30px;background:var(--surface3);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:0.85rem}
+.ph-title{font-weight:600;font-size:0.92rem}
+.ph-arrow{color:var(--muted);font-size:0.75rem;transition:transform var(--tr)}
+.ph-arrow.open{transform:rotate(180deg)}
+.pb{padding:22px;display:none}
+.pb.open{display:block;animation:sld .2s ease}
+@keyframes sld{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── FORM ── */
+.fg{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:14px;margin-bottom:18px}
+.ff{display:flex;flex-direction:column;gap:6px}
+.fl{font-family:var(--mono);font-size:0.63rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.fi{background:var(--surface2);border:1px solid var(--border);border-radius:var(--rsm);color:var(--text);font-family:var(--font);font-size:0.9rem;padding:10px 13px;outline:none;transition:border-color var(--tr),box-shadow var(--tr),background var(--tr);width:100%}
+.fi::placeholder{color:var(--muted);opacity:.5}
+.fi:focus{border-color:var(--border-hi);box-shadow:0 0 0 3px rgba(99,179,237,0.08);background:var(--surface3)}
+.fa{display:flex;gap:11px;align-items:center;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:10px 20px;border-radius:var(--rsm);border:none;font-family:var(--font);font-size:0.85rem;font-weight:600;cursor:pointer;transition:all var(--tr);white-space:nowrap}
+.btn-p{background:linear-gradient(135deg,var(--blue-d),var(--blue));color:#fff;box-shadow:0 4px 12px rgba(99,179,237,0.22)}
+.btn-p:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(99,179,237,0.32)}
+.btn-p:active{transform:scale(0.98)}
+.btn-g{background:transparent;color:var(--muted);border:1px solid var(--border)}
+.btn-g:hover{background:var(--surface2);color:var(--text)}
+.fhint{font-size:0.72rem;color:var(--muted);margin-left:auto}
+
+/* ── PRODUCT PREVIEW ── */
+.preview-row{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--surface3);border-radius:var(--rsm);margin-bottom:18px;font-size:0.82rem;color:var(--dim);min-height:44px}
+.preview-img{font-size:1.6rem;line-height:1}
+.preview-calc{font-family:var(--mono);font-size:0.78rem;color:var(--teal);margin-left:auto}
+
+/* ── TABLE TOOLBAR ── */
+.ttb{display:flex;align-items:center;justify-content:space-between;padding:16px 22px;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:10px}
+.ttb-left{display:flex;align-items:center;gap:11px}
+.tc{font-family:var(--mono);font-size:0.68rem;color:var(--muted);background:var(--surface2);padding:3px 10px;border-radius:20px;border:1px solid var(--border)}
+.sb{position:relative}
+.sb input{background:var(--surface2);border:1px solid var(--border);border-radius:var(--rsm);color:var(--text);font-family:var(--font);font-size:0.8rem;padding:7px 12px 7px 30px;outline:none;width:190px;transition:all var(--tr)}
+.sb input:focus{border-color:var(--border-hi);width:230px}
+.si{position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:0.78rem}
+
+/* ── TABLE ── */
+.tscroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+thead tr{border-bottom:1px solid var(--border)}
+th{font-family:var(--mono);font-size:0.6rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);padding:11px 14px;text-align:left;white-space:nowrap;cursor:pointer;user-select:none;transition:color var(--tr)}
+th:hover{color:var(--text)}
+th.sorted{color:var(--blue)}
+th.c,td.c{text-align:center}
+th.r,td.r{text-align:right}
+tbody tr{border-bottom:1px solid var(--border);transition:background var(--tr);animation:row .28s ease both}
+@keyframes row{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:translateX(0)}}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:var(--surface2)}
+td{padding:13px 14px;font-size:0.855rem;vertical-align:middle}
+
+/* ── PRODUCT CELL ── */
+.pcell{display:flex;align-items:center;gap:11px}
+.pavatar{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.45rem;flex-shrink:0}
+.pname{font-weight:500;font-size:0.88rem}
+.pid{font-family:var(--mono);font-size:0.6rem;color:var(--muted)}
+.ptime{font-family:var(--mono);font-size:0.6rem;color:var(--teal);margin-top:1px}
+.mono{font-family:var(--mono);font-size:0.8rem}
+.qty-chip{font-family:var(--mono);font-size:0.72rem;font-weight:600;background:var(--surface3);color:var(--dim);padding:3px 10px;border-radius:6px}
+
+/* ── PROFIT PILL ── */
+.pp{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-family:var(--mono);font-size:0.76rem;font-weight:600}
+.pp.pos{background:rgba(72,187,120,0.12);color:var(--green);border:1px solid rgba(72,187,120,0.2)}
+.pp.neg{background:rgba(252,129,129,0.12);color:var(--red);border:1px solid rgba(252,129,129,0.2)}
+
+/* ── MARGIN BAR ── */
+.mbw{min-width:80px}
+.mbsub{font-family:var(--mono);font-size:0.67rem;color:var(--muted);margin-bottom:3px;text-align:right}
+.mbt{height:4px;background:var(--surface3);border-radius:4px;overflow:hidden}
+.mbf{height:100%;border-radius:4px;background:var(--green);transition:width .5s ease}
+.mbf.neg{background:var(--red)}
+
+/* ── DELETE BTN ── */
+.bdel{background:transparent;border:1px solid transparent;border-radius:6px;color:var(--muted);font-size:0.82rem;padding:5px 9px;cursor:pointer;transition:all var(--tr);line-height:1}
+.bdel:hover{border-color:rgba(252,129,129,0.3);color:var(--red);background:rgba(252,129,129,0.08)}
+
+/* ── EMPTY ── */
+.empty{text-align:center;padding:58px 30px}
+.empty-g{font-size:2.8rem;margin-bottom:14px;opacity:.22;filter:grayscale(1)}
+.empty-t{font-size:1rem;font-weight:600;color:var(--dim);margin-bottom:5px}
+.empty-s{font-size:0.78rem;color:var(--muted);max-width:260px;margin:0 auto 18px}
+
+/* ── WEEK VIEW ── */
+.week-wrap{display:flex;flex-direction:column;gap:20px}
+.day-block{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+.day-header{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:var(--surface2);border-bottom:1px solid var(--border)}
+.day-title-wrap{display:flex;align-items:center;gap:12px}
+.day-dot{width:10px;height:10px;border-radius:50%;background:var(--blue)}
+.day-dot.today{background:var(--green);box-shadow:0 0 8px rgba(72,187,120,0.5)}
+.day-label{font-weight:600;font-size:0.9rem}
+.day-today-badge{font-family:var(--mono);font-size:0.6rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--green);background:rgba(72,187,120,0.12);border:1px solid rgba(72,187,120,0.2);padding:2px 8px;border-radius:20px}
+.day-stats{display:flex;gap:18px;align-items:center}
+.dstat{font-family:var(--mono);font-size:0.72rem;color:var(--muted)}
+.dstat span{color:var(--text);font-weight:600}
+.day-empty{padding:20px 20px;font-size:0.8rem;color:var(--muted);font-style:italic;text-align:center}
+
+/* ── GUIDE ── */
+.guide-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;padding:22px}
+.gs{background:var(--surface2);border-radius:var(--rsm);padding:16px;border:1px solid var(--border)}
+.gsn{font-family:var(--mono);font-size:0.62rem;font-weight:700;letter-spacing:.1em;color:var(--blue);margin-bottom:8px}
+.gsi{font-size:1.2rem;margin-bottom:6px;display:block}
+.gst{font-size:0.83rem;font-weight:600;margin-bottom:3px}
+.gsd{font-size:0.73rem;color:var(--muted);line-height:1.5}
+
+/* ── TOAST ── */
+#toast-wrap{position:fixed;bottom:26px;right:26px;display:flex;flex-direction:column;gap:9px;z-index:9999}
+.toast{display:flex;align-items:center;gap:9px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--rsm);padding:11px 17px;font-size:0.8rem;box-shadow:var(--shadow);animation:tin .32s cubic-bezier(0.34,1.56,0.64,1) both;max-width:310px}
+.toast.s{border-left:3px solid var(--green)}
+.toast.e{border-left:3px solid var(--red)}
+.toast.i{border-left:3px solid var(--blue)}
+@keyframes tin{from{opacity:0;transform:translateY(18px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes tout{to{opacity:0;transform:translateY(8px);max-height:0;padding:0;margin:0}}
+
+/* ── FOOTER ── */
+footer{text-align:center;padding:26px 0 0;font-family:var(--mono);font-size:0.65rem;color:var(--muted);letter-spacing:.1em;border-top:1px solid var(--border);margin-top:36px}
+
+/* ── RESPONSIVE ── */
+@media(max-width:960px){.metrics{grid-template-columns:repeat(3,1fr)}.fg{grid-template-columns:1fr 1fr}}
+@media(max-width:640px){.metrics{grid-template-columns:1fr 1fr}.fg{grid-template-columns:1fr}.guide-grid{grid-template-columns:1fr 1fr}.day-stats{flex-wrap:wrap;gap:8px}}
+@media(max-width:440px){.metrics{grid-template-columns:1fr}.guide-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<!-- NAV -->
+<nav>
+  <div class="nav-brand">
+    <div class="nav-logo">📒</div>
+    <span class="nav-name">StatioTrack Pro</span>
+    <span class="nav-badge">v3.0</span>
+  </div>
+  <div class="nav-right">
+    <div class="nav-clock" id="liveClock">00:00:00</div>
+    <div class="nav-date" id="navDate"></div>
+  </div>
+</nav>
+
+<!-- TABS -->
+<div class="tabs">
+  <button class="tab active" id="tab-today" onclick="switchTab('today')">
+    <span class="tab-icon">📋</span> Today's Ledger
+  </button>
+  <button class="tab" id="tab-week" onclick="switchTab('week')">
+    <span class="tab-icon">📅</span> 7-Day History
+  </button>
+  <button class="tab" id="tab-guide" onclick="switchTab('guide')">
+    <span class="tab-icon">📖</span> How to Use
+  </button>
+</div>
+
+<!-- ════════════════════ TODAY VIEW ════════════════════ -->
+<div id="view-today">
+
+  <!-- METRICS -->
+  <div class="metrics">
+    <div class="mc blue">
+      <span class="mc-icon">📦</span>
+      <div class="mc-label">Products Today</div>
+      <div class="mc-val" id="mCount">0</div>
+      <div class="mc-sub">items tracked</div>
+    </div>
+    <div class="mc gold">
+      <span class="mc-icon">💸</span>
+      <div class="mc-label">Daily Cost</div>
+      <div class="mc-val gold" id="mCost">$0.00</div>
+      <div class="mc-sub">original × qty</div>
+    </div>
+    <div class="mc green">
+      <span class="mc-icon">💰</span>
+      <div class="mc-label">Daily Revenue</div>
+      <div class="mc-val" id="mRev">$0.00</div>
+      <div class="mc-sub">sold price × qty</div>
+    </div>
+    <div class="mc purple">
+      <span class="mc-icon">📈</span>
+      <div class="mc-label">Daily Profit</div>
+      <div class="mc-val" id="mProfit">$0.00</div>
+      <div class="mc-sub" id="mMargin">0% margin</div>
+    </div>
+    <div class="mc teal">
+      <span class="mc-icon">🏆</span>
+      <div class="mc-label">Best Seller</div>
+      <div class="mc-val" id="mBest" style="font-size:0.9rem;margin-top:2px">—</div>
+      <div class="mc-sub">highest daily revenue</div>
+    </div>
+  </div>
+
+  <!-- ADD PRODUCT -->
+  <div class="panel">
+    <div class="ph" onclick="togglePanel('form')">
+      <div class="ph-left">
+        <div class="ph-icon">➕</div>
+        <span class="ph-title">Add New Product</span>
+      </div>
+      <span class="ph-arrow open" id="form-arrow">▼</span>
+    </div>
+    <div class="pb open" id="form-body">
+      <!-- LIVE PREVIEW -->
+      <div class="preview-row" id="previewRow">
+        <span class="preview-img" id="previewImg">📦</span>
+        <span id="previewText" style="color:var(--muted)">Start typing a product name to see a preview…</span>
+        <span class="preview-calc" id="previewCalc"></span>
+      </div>
+
+      <div class="fg">
+        <div class="ff">
+          <label class="fl">Product Name</label>
+          <input class="fi" id="iName" type="text" placeholder="e.g. Blue Ballpoint Pen" autocomplete="off" oninput="updatePreview()"/>
+        </div>
+        <div class="ff">
+          <label class="fl">Qty Sold / Day</label>
+          <input class="fi" id="iQty" type="number" placeholder="e.g. 20" min="0" step="1" oninput="updatePreview()"/>
+        </div>
+        <div class="ff">
+          <label class="fl">Original Price ($)</label>
+          <input class="fi" id="iCost" type="number" placeholder="e.g. 0.50" min="0" step="0.01" oninput="updatePreview()"/>
+        </div>
+        <div class="ff">
+          <label class="fl">Sold Price ($)</label>
+          <input class="fi" id="iSell" type="number" placeholder="e.g. 1.00" min="0" step="0.01" oninput="updatePreview()"/>
+        </div>
+      </div>
+      <div class="fa">
+        <button class="btn btn-p" onclick="addProduct()">+ Add Product</button>
+        <button class="btn btn-g" onclick="clearForm()">Clear</button>
+        <span class="fhint">Tip: press Enter to add quickly</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABLE -->
+  <div class="panel">
+    <div class="ttb">
+      <div class="ttb-left">
+        <div class="ph-icon">📋</div>
+        <strong style="font-size:0.92rem">Today's Register</strong>
+        <span class="tc" id="tCount">0 items</span>
+      </div>
+      <div class="sb">
+        <span class="si">🔍</span>
+        <input type="text" id="searchInput" placeholder="Search products…" oninput="renderToday()"/>
+      </div>
+    </div>
+    <div class="tscroll">
+      <table>
+        <thead>
+          <tr>
+            <th onclick="sortBy('name')"    id="th-name">Product ↕</th>
+            <th onclick="sortBy('qty')"     id="th-qty"  class="r">Qty/Day ↕</th>
+            <th onclick="sortBy('cost')"    id="th-cost" class="r">Orig. Price ↕</th>
+            <th onclick="sortBy('sell')"    id="th-sell" class="r">Sold Price ↕</th>
+            <th onclick="sortBy('dcost')"   id="th-dcost" class="r">Daily Cost ↕</th>
+            <th onclick="sortBy('drev')"    id="th-drev" class="r">Daily Revenue ↕</th>
+            <th onclick="sortBy('dprofit')" id="th-dprofit" class="r">Daily Profit ↕</th>
+            <th onclick="sortBy('margin')"  id="th-margin" class="r">Margin ↕</th>
+            <th class="c">Submitted</th>
+            <th class="c">Remove</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+      <div class="empty" id="emptyState">
+        <div class="empty-g">📦</div>
+        <div class="empty-t">No products yet today</div>
+        <div class="empty-s">Use the "Add New Product" form above to log your first item.</div>
+        <button class="btn btn-g" onclick="togglePanel('form',true)">+ Add first product</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════ WEEK VIEW ════════════════════ -->
+<div id="view-week" style="display:none">
+  <div class="week-wrap" id="weekWrap"></div>
+</div>
+
+<!-- ════════════════════ GUIDE VIEW ════════════════════ -->
+<div id="view-guide" style="display:none">
+  <div class="panel">
+    <div class="ph" style="cursor:default">
+      <div class="ph-left">
+        <div class="ph-icon">📖</div>
+        <span class="ph-title">How to Use StatioTrack Pro</span>
+      </div>
+    </div>
+    <div class="guide-grid">
+      <div class="gs"><div class="gsn">STEP 01</div><span class="gsi">✏️</span><div class="gst">Enter Product Name</div><div class="gsd">Type any stationery item name. The app auto-detects the product type and shows a matching icon instantly.</div></div>
+      <div class="gs"><div class="gsn">STEP 02</div><span class="gsi">🔢</span><div class="gst">Set Daily Quantity</div><div class="gsd">Enter how many units you typically sell in one day. A live profit preview shows before you submit.</div></div>
+      <div class="gs"><div class="gsn">STEP 03</div><span class="gsi">🏷️</span><div class="gst">Enter Both Prices</div><div class="gsd">Set your buying (original) cost and your selling price. Daily profit is calculated automatically for you.</div></div>
+      <div class="gs"><div class="gsn">STEP 04</div><span class="gsi">📊</span><div class="gst">Read Your Dashboard</div><div class="gsd">The 5 cards at the top update instantly with daily totals, your best seller, and profit margin.</div></div>
+      <div class="gs"><div class="gsn">STEP 05</div><span class="gsi">📅</span><div class="gst">Check 7-Day History</div><div class="gsd">Switch to the "7-Day History" tab to see all past entries grouped by day, with daily summaries.</div></div>
+      <div class="gs"><div class="gsn">STEP 06</div><span class="gsi">🕐</span><div class="gst">Submission Timestamps</div><div class="gsd">Every product is stamped with the exact time it was added, visible in the table and the history view.</div></div>
+      <div class="gs"><div class="gsn">STEP 07</div><span class="gsi">🔍</span><div class="gst">Search & Sort</div><div class="gsd">Use the search box to filter products. Click any column header to sort ascending or descending.</div></div>
+      <div class="gs"><div class="gsn">STEP 08</div><span class="gsi">💾</span><div class="gst">Auto-Saved Data</div><div class="gsd">All data is saved to your browser automatically. Close and reopen — your records are still there.</div></div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /shell -->
+
+<footer style="max-width:1180px;margin:0 auto;padding:22px 20px">
+  STATIOTRACK PRO v3.0 &nbsp;·&nbsp; SMART PRODUCT ICONS &nbsp;·&nbsp; 7-DAY HISTORY &nbsp;·&nbsp; AUTO-SAVED &nbsp;·&nbsp; NO ACCOUNT NEEDED
+</footer>
+
+<div id="toast-wrap"></div>
+
+<script>
+/* ═══════ PRODUCT ICON MAP ═══════
+   Maps keywords → emoji. The matcher checks the product name
+   against these keywords (longest/most-specific first). */
+const ICON_MAP = [
+  // Pens
+  {k:['ballpoint pen','ball pen','biro'],       e:'🖊️', bg:'rgba(99,179,237,0.15)'},
+  {k:['fountain pen'],                           e:'🖋️', bg:'rgba(183,148,244,0.15)'},
+  {k:['gel pen','gel ink'],                      e:'✒️', bg:'rgba(99,179,237,0.15)'},
+  {k:['marker','highlighter','highlight'],       e:'🖍️', bg:'rgba(246,173,85,0.18)'},
+  {k:['whiteboard marker','dry erase'],          e:'🖊️', bg:'rgba(79,209,197,0.15)'},
+  {k:['permanent marker','sharpie'],             e:'🖊️', bg:'rgba(252,129,129,0.15)'},
+  {k:['felt pen','felt tip'],                    e:'🖍️', bg:'rgba(72,187,120,0.15)'},
+  {k:['pen'],                                    e:'🖊️', bg:'rgba(99,179,237,0.15)'},
+  // Pencils
+  {k:['mechanical pencil','propelling pencil'],  e:'✏️', bg:'rgba(246,173,85,0.18)'},
+  {k:['colored pencil','colour pencil','crayon'],e:'🖍️', bg:'rgba(252,129,129,0.15)'},
+  {k:['pencil'],                                 e:'✏️', bg:'rgba(246,173,85,0.18)'},
+  // Erasers & correction
+  {k:['eraser','rubber','correction fluid','white-out','tipp-ex','tipex'], e:'🔲', bg:'rgba(255,255,255,0.1)'},
+  {k:['correction tape','correction pen'],       e:'📝', bg:'rgba(255,255,255,0.08)'},
+  // Notebooks & paper
+  {k:['notebook','note book'],                   e:'📓', bg:'rgba(72,187,120,0.15)'},
+  {k:['journal','diary'],                        e:'📔', bg:'rgba(183,148,244,0.15)'},
+  {k:['spiral','spiral bound'],                  e:'🗒️', bg:'rgba(99,179,237,0.12)'},
+  {k:['a4','a3','a5','letter paper','copy paper','printer paper'], e:'📄', bg:'rgba(255,255,255,0.07)'},
+  {k:['sticky note','post-it','post it'],        e:'🗒️', bg:'rgba(246,173,85,0.18)'},
+  {k:['graph paper','grid paper'],               e:'📐', bg:'rgba(79,209,197,0.12)'},
+  {k:['notepad','writing pad','legal pad'],      e:'📝', bg:'rgba(72,187,120,0.12)'},
+  {k:['paper'],                                  e:'📄', bg:'rgba(255,255,255,0.07)'},
+  // Binders & files
+  {k:['binder','ring binder','lever arch'],      e:'📂', bg:'rgba(246,173,85,0.15)'},
+  {k:['folder','file folder'],                   e:'📁', bg:'rgba(246,173,85,0.12)'},
+  {k:['portfolio'],                              e:'💼', bg:'rgba(99,179,237,0.12)'},
+  {k:['clipboard'],                              e:'📋', bg:'rgba(183,148,244,0.12)'},
+  {k:['file','document holder'],                 e:'🗂️', bg:'rgba(246,173,85,0.12)'},
+  // Scissors & cutting
+  {k:['scissors','scissor'],                     e:'✂️', bg:'rgba(252,129,129,0.15)'},
+  {k:['cutter','box cutter','utility knife','craft knife'], e:'🔪', bg:'rgba(252,129,129,0.12)'},
+  // Measuring
+  {k:['ruler'],                                  e:'📏', bg:'rgba(79,209,197,0.15)'},
+  {k:['set square','triangle ruler'],            e:'📐', bg:'rgba(79,209,197,0.12)'},
+  {k:['protractor'],                             e:'📐', bg:'rgba(79,209,197,0.12)'},
+  {k:['compass','drawing compass'],              e:'🧭', bg:'rgba(79,209,197,0.12)'},
+  {k:['tape measure'],                           e:'📏', bg:'rgba(79,209,197,0.12)'},
+  // Fasteners
+  {k:['stapler'],                                e:'🗂️', bg:'rgba(99,179,237,0.12)'},
+  {k:['staple','staples'],                       e:'📌', bg:'rgba(99,179,237,0.1)'},
+  {k:['paper clip','paperclip'],                 e:'📎', bg:'rgba(183,148,244,0.15)'},
+  {k:['binder clip','bulldog clip'],             e:'📎', bg:'rgba(183,148,244,0.12)'},
+  {k:['pin','thumbtack','drawing pin'],          e:'📌', bg:'rgba(252,129,129,0.15)'},
+  {k:['push pin','pushpin'],                     e:'📍', bg:'rgba(252,129,129,0.15)'},
+  // Tape & glue
+  {k:['tape dispenser'],                         e:'🗂️', bg:'rgba(79,209,197,0.1)'},
+  {k:['scotch tape','adhesive tape','sellotape','masking tape'], e:'🗂️', bg:'rgba(79,209,197,0.12)'},
+  {k:['glue stick','glue gun'],                  e:'🖊️', bg:'rgba(246,173,85,0.12)'},
+  {k:['glue','adhesive'],                        e:'🖊️', bg:'rgba(246,173,85,0.1)'},
+  // Ink & refill
+  {k:['ink cartridge','ink refill'],             e:'🖨️', bg:'rgba(99,179,237,0.1)'},
+  {k:['ink'],                                    e:'🖊️', bg:'rgba(99,179,237,0.12)'},
+  // Office equipment
+  {k:['calculator'],                             e:'🧮', bg:'rgba(72,187,120,0.15)'},
+  {k:['hole punch','punch'],                     e:'🗂️', bg:'rgba(183,148,244,0.1)'},
+  {k:['shredder'],                               e:'🗑️', bg:'rgba(252,129,129,0.1)'},
+  {k:['stamp','rubber stamp'],                   e:'📮', bg:'rgba(252,129,129,0.12)'},
+  {k:['label','label maker'],                    e:'🏷️', bg:'rgba(246,173,85,0.15)'},
+  {k:['index card','flash card','flashcard'],    e:'🃏', bg:'rgba(255,255,255,0.07)'},
+  {k:['divider','tab divider'],                  e:'📑', bg:'rgba(183,148,244,0.1)'},
+  {k:['envelope'],                               e:'✉️', bg:'rgba(99,179,237,0.1)'},
+  {k:['pencil case','pen case','pencil box'],    e:'🗃️', bg:'rgba(246,173,85,0.15)'},
+  {k:['pencil sharpener','sharpener'],           e:'✏️', bg:'rgba(246,173,85,0.1)'},
+  // Boards
+  {k:['whiteboard','white board'],               e:'🟫', bg:'rgba(255,255,255,0.07)'},
+  {k:['corkboard','cork board','notice board'],  e:'📌', bg:'rgba(246,173,85,0.12)'},
+  // Bags
+  {k:['backpack','school bag'],                  e:'🎒', bg:'rgba(72,187,120,0.12)'},
+  {k:['bag'],                                    e:'👜', bg:'rgba(246,173,85,0.12)'},
+  // Ink pads
+  {k:['ink pad','stamp pad'],                    e:'📮', bg:'rgba(252,129,129,0.1)'},
+  // Fallback
+  {k:['stationery','stationary'],                e:'📒', bg:'rgba(99,179,237,0.1)'},
+];
+
+function getProductIcon(name) {
+  const n = name.toLowerCase();
+  for (const entry of ICON_MAP) {
+    for (const kw of entry.k) {
+      if (n.includes(kw)) return { e: entry.e, bg: entry.bg };
+    }
+  }
+  return { e:'📦', bg:'rgba(255,255,255,0.05)' };
+}
+
+/* ═══════ STATE ═══════ */
+const SK = 'statiotrack_v4';
+let products = [];
+let sortKey  = 'name';
+let sortAsc  = true;
+let activeTab = 'today';
+
+/* ═══════ INIT ═══════ */
+function init() {
+  try { const r = localStorage.getItem(SK); if (r) products = JSON.parse(r); }
+  catch { products = []; }
+  updateClock();
+  setInterval(updateClock, 1000);
+  document.getElementById('navDate').textContent =
+    new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  render();
+  document.addEventListener('keydown', e => {
+    const inForm = ['iName','iQty','iCost','iSell'].includes(document.activeElement?.id);
+    if (e.key === 'Enter' && inForm) addProduct();
+  });
+}
+
+/* ═══════ CLOCK ═══════ */
+function updateClock() {
+  const now = new Date();
+  document.getElementById('liveClock').textContent =
+    now.toLocaleTimeString('en-US',{hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+
+/* ═══════ TABS ═══════ */
+function switchTab(tab) {
+  activeTab = tab;
+  ['today','week','guide'].forEach(t => {
+    document.getElementById('view-'+t).style.display = t===tab ? 'block' : 'none';
+    document.getElementById('tab-'+t).classList.toggle('active', t===tab);
+  });
+  if (tab === 'week') renderWeek();
+}
+
+/* ═══════ PANEL TOGGLE ═══════ */
+function togglePanel(id, forceOpen) {
+  const body  = document.getElementById(id+'-body');
+  const arrow = document.getElementById(id+'-arrow');
+  if (!body) return;
+  const open = body.classList.contains('open');
+  const next = forceOpen !== undefined ? forceOpen : !open;
+  body.classList.toggle('open', next);
+  if (arrow) arrow.classList.toggle('open', next);
+}
+
+/* ═══════ PREVIEW ═══════ */
+function updatePreview() {
+  const name = document.getElementById('iName').value.trim();
+  const qty  = parseFloat(document.getElementById('iQty').value)  || 0;
+  const cost = parseFloat(document.getElementById('iCost').value) || 0;
+  const sell = parseFloat(document.getElementById('iSell').value) || 0;
+  const icon = getProductIcon(name || '');
+  document.getElementById('previewImg').textContent = icon.e;
+  const profit = (sell - cost) * qty;
+  if (name) {
+    document.getElementById('previewText').innerHTML =
+      `<strong style="color:var(--text)">${esc(name)}</strong> — ${icon.e} icon matched`;
+    document.getElementById('previewText').style.color = 'var(--dim)';
+    if (qty > 0 && cost > 0 && sell > 0) {
+      const cls = profit >= 0 ? 'var(--green)' : 'var(--red)';
+      document.getElementById('previewCalc').innerHTML =
+        `Daily profit: <span style="color:${cls};font-weight:700">${profit>=0?'+':''}$${fmt(profit)}</span>`;
+    } else {
+      document.getElementById('previewCalc').textContent = '';
+    }
+  } else {
+    document.getElementById('previewText').textContent = 'Start typing a product name to see a preview…';
+    document.getElementById('previewText').style.color = 'var(--muted)';
+    document.getElementById('previewCalc').textContent = '';
+  }
+}
+
+/* ═══════ ADD PRODUCT ═══════ */
+function addProduct() {
+  const name = document.getElementById('iName').value.trim();
+  const qty  = parseFloat(document.getElementById('iQty').value);
+  const cost = parseFloat(document.getElementById('iCost').value);
+  const sell = parseFloat(document.getElementById('iSell').value);
+  if (!name)             return toast('Please enter a product name.','e');
+  if (isNaN(qty)||qty<0) return toast('Enter a valid quantity (≥ 0).','e');
+  if (isNaN(cost)||cost<0)return toast('Enter a valid original price.','e');
+  if (isNaN(sell)||sell<0)return toast('Enter a valid sold price.','e');
+  const now = new Date();
+  const icon = getProductIcon(name);
+  products.push({
+    id: Date.now(),
+    name, qty, cost, sell,
+    icon,
+    date: dateKey(now),    // "YYYY-MM-DD"
+    time: now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true}),
+    ts: now.getTime()
+  });
+  save(); render(); clearForm();
+  toast('✓ '+name+' added to ledger.','s');
+  document.getElementById('iName').focus();
+}
+
+/* ═══════ DELETE ═══════ */
+function deleteProduct(id) {
+  const p = products.find(x=>x.id===id);
+  products = products.filter(x=>x.id!==id);
+  save(); render();
+  if (activeTab==='week') renderWeek();
+  if (p) toast('Removed: '+p.name,'i');
+}
+
+/* ═══════ CLEAR FORM ═══════ */
+function clearForm() {
+  ['iName','iQty','iCost','iSell'].forEach(id=>document.getElementById(id).value='');
+  updatePreview();
+}
+
+/* ═══════ SORT ═══════ */
+function sortBy(key) {
+  sortAsc = (sortKey===key) ? !sortAsc : true;
+  sortKey = key;
+  renderToday();
+  document.querySelectorAll('th').forEach(t=>t.classList.remove('sorted'));
+  const el = document.getElementById('th-'+key);
+  if (el) el.classList.add('sorted');
+}
+
+/* ═══════ RENDER ═══════ */
+function render() { updateMetrics(); renderToday(); }
+
+function todaysProducts() {
+  const today = dateKey(new Date());
+  return products.filter(p => p.date === today);
+}
+
+function updateMetrics() {
+  const ps = todaysProducts();
+  let tCost=0, tRev=0, bestP=null, bestRev=0;
+  ps.forEach(p=>{
+    tCost += p.qty*p.cost;
+    tRev  += p.qty*p.sell;
+    const r = p.qty*p.sell;
+    if (r > bestRev) { bestRev=r; bestP=p; }
+  });
+  const profit = tRev - tCost;
+  const margin = tRev>0 ? (profit/tRev*100) : 0;
+  document.getElementById('mCount').textContent  = ps.length;
+  document.getElementById('mCost').textContent   = '$'+fmt(tCost);
+  document.getElementById('mRev').textContent    = '$'+fmt(tRev);
+  const mp = document.getElementById('mProfit');
+  mp.textContent = (profit>=0?'+':'')+'$'+fmt(profit);
+  mp.className = 'mc-val '+(profit>=0?'g':'r');
+  document.getElementById('mMargin').textContent = fmt(margin,1)+'% margin';
+  const mb = document.getElementById('mBest');
+  if (bestP) {
+    mb.textContent = bestP.icon.e+' '+bestP.name;
+    mb.style.fontSize='0.82rem';
+  } else {
+    mb.textContent='—';
+    mb.style.fontSize='1.5rem';
+  }
+}
+
+function renderToday() {
+  const tbody = document.getElementById('tbody');
+  const empty = document.getElementById('emptyState');
+  const q = (document.getElementById('searchInput').value||'').toLowerCase();
+  tbody.innerHTML='';
+
+  let rows = todaysProducts().map(enrich);
+  if (q) rows = rows.filter(r=>r.name.toLowerCase().includes(q));
+  rows.sort((a,b)=>{
+    let va=a[sortKey], vb=b[sortKey];
+    if(typeof va==='string'){va=va.toLowerCase();vb=vb.toLowerCase();}
+    return sortAsc?(va<vb?-1:va>vb?1:0):(va>vb?-1:va<vb?1:0);
+  });
+
+  empty.style.display = rows.length===0 ? 'block' : 'none';
+  document.getElementById('tCount').textContent = rows.length+' item'+(rows.length!==1?'s':'');
+
+  rows.forEach((r,i)=>{
+    const pos = r.dprofit>=0;
+    const mp = Math.min(Math.max(r.margin,0),100);
+    const tr = document.createElement('tr');
+    tr.style.animationDelay=(i*.03)+'s';
+    tr.innerHTML=`
+      <td>
+        <div class="pcell">
+          <div class="pavatar" style="background:${r.icon.bg}">${r.icon.e}</div>
+          <div>
+            <div class="pname">${esc(r.name)}</div>
+            <div class="pid">#${r.id}</div>
+          </div>
+        </div>
+      </td>
+      <td class="r"><span class="qty-chip">${fmt(r.qty,0)}</span></td>
+      <td class="mono r">$${fmt(r.cost)}</td>
+      <td class="mono r">$${fmt(r.sell)}</td>
+      <td class="mono r">$${fmt(r.dcost)}</td>
+      <td class="mono r">$${fmt(r.drev)}</td>
+      <td class="r">
+        <span class="pp ${pos?'pos':'neg'}">${pos?'▲':'▼'} $${fmt(Math.abs(r.dprofit))}</span>
+      </td>
+      <td class="r">
+        <div class="mbw">
+          <div class="mbsub">${fmt(r.margin,1)}%</div>
+          <div class="mbt"><div class="mbf ${pos?'':'neg'}" style="width:${mp}%"></div></div>
+        </div>
+      </td>
+      <td class="c" style="font-family:var(--mono);font-size:0.7rem;color:var(--teal)">${r.time||'—'}</td>
+      <td class="c"><button class="bdel" onclick="deleteProduct(${r.id})" title="Remove">✕</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+/* ═══════ WEEK VIEW ═══════ */
+function renderWeek() {
+  const wrap = document.getElementById('weekWrap');
+  wrap.innerHTML='';
+  const todayKey = dateKey(new Date());
+
+  for (let d=0; d<7; d++) {
+    const date = new Date();
+    date.setDate(date.getDate() - d);
+    const key   = dateKey(date);
+    const label = date.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+    const isToday = key === todayKey;
+
+    const dayPs = products.filter(p=>p.date===key).sort((a,b)=>a.ts-b.ts);
+    const enriched = dayPs.map(enrich);
+    let dCost=0, dRev=0;
+    enriched.forEach(r=>{dCost+=r.dcost; dRev+=r.drev;});
+    const dProfit = dRev-dCost;
+    const pCol = dProfit>=0 ? 'var(--green)' : 'var(--red)';
+
+    const block = document.createElement('div');
+    block.className='day-block';
+    block.style.animationDelay=(d*.05)+'s';
+    block.style.animation='row .3s ease both';
+
+    block.innerHTML=`
+      <div class="day-header">
+        <div class="day-title-wrap">
+          <div class="day-dot ${isToday?'today':''}"></div>
+          <div class="day-label">${label}</div>
+          ${isToday?'<span class="day-today-badge">TODAY</span>':''}
+        </div>
+        <div class="day-stats">
+          <div class="dstat">Items: <span>${enriched.length}</span></div>
+          <div class="dstat">Cost: <span style="color:var(--gold)">$${fmt(dCost)}</span></div>
+          <div class="dstat">Revenue: <span>$${fmt(dRev)}</span></div>
+          <div class="dstat">Profit: <span style="color:${pCol}">${dProfit>=0?'+':''}$${fmt(dProfit)}</span></div>
+        </div>
+      </div>
+      ${enriched.length===0
+        ? `<div class="day-empty">No products recorded on this day.</div>`
+        : `<div class="tscroll">${buildDayTable(enriched)}</div>`
+      }
+    `;
+    wrap.appendChild(block);
+  }
+}
+
+function buildDayTable(rows) {
+  const ths = `
+    <thead><tr>
+      <th>Product</th>
+      <th class="r">Qty</th>
+      <th class="r">Orig. Price</th>
+      <th class="r">Sold Price</th>
+      <th class="r">Daily Cost</th>
+      <th class="r">Revenue</th>
+      <th class="r">Profit</th>
+      <th class="r">Margin</th>
+      <th class="c">Time Added</th>
+    </tr></thead>`;
+  const tds = rows.map((r,i)=>{
+    const pos=r.dprofit>=0;
+    const mp=Math.min(Math.max(r.margin,0),100);
+    return `<tr style="animation-delay:${i*.025}s">
+      <td>
+        <div class="pcell">
+          <div class="pavatar" style="background:${r.icon.bg};width:34px;height:34px;font-size:1.2rem">${r.icon.e}</div>
+          <div>
+            <div class="pname" style="font-size:0.85rem">${esc(r.name)}</div>
+            <div class="pid">${r.date}</div>
+          </div>
+        </div>
+      </td>
+      <td class="mono r">${fmt(r.qty,0)}</td>
+      <td class="mono r">$${fmt(r.cost)}</td>
+      <td class="mono r">$${fmt(r.sell)}</td>
+      <td class="mono r">$${fmt(r.dcost)}</td>
+      <td class="mono r">$${fmt(r.drev)}</td>
+      <td class="r"><span class="pp ${pos?'pos':'neg'}">${pos?'▲':'▼'} $${fmt(Math.abs(r.dprofit))}</span></td>
+      <td class="r">
+        <div class="mbw" style="min-width:60px">
+          <div class="mbsub">${fmt(r.margin,1)}%</div>
+          <div class="mbt"><div class="mbf ${pos?'':'neg'}" style="width:${mp}%"></div></div>
+        </div>
+      </td>
+      <td class="c" style="font-family:var(--mono);font-size:0.68rem;color:var(--teal)">${r.time||'—'}</td>
+    </tr>`;
+  }).join('');
+  return `<table>${ths}<tbody>${tds}</tbody></table>`;
+}
+
+/* ═══════ HELPERS ═══════ */
+function enrich(p) {
+  return {
+    ...p,
+    dcost:   p.qty*p.cost,
+    drev:    p.qty*p.sell,
+    dprofit: p.qty*p.sell - p.qty*p.cost,
+    margin:  p.sell>0 ? ((p.sell-p.cost)/p.sell*100) : 0,
+  };
+}
+
+function dateKey(d) {
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+
+function save() { localStorage.setItem(SK, JSON.stringify(products)); }
+
+function fmt(n, dec=2) {
+  return parseFloat(n).toLocaleString('en-US',{minimumFractionDigits:dec,maximumFractionDigits:dec});
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function toast(msg, type='i') {
+  const wrap = document.getElementById('toast-wrap');
+  const el   = document.createElement('div');
+  el.className='toast '+type;
+  el.innerHTML=`<span>${msg}</span>`;
+  wrap.appendChild(el);
+  setTimeout(()=>{
+    el.style.animation='tout .28s ease forwards';
+    setTimeout(()=>el.remove(),300);
+  },2800);
+}
+
+init();
+</script>
+</body>
+</html>
